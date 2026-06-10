@@ -9,7 +9,7 @@
 <!--
 function na_restore_img_src(name, nsdoc)
 {
-  var img = eval((navigator.appName.indexOf('Netscape', 0) != -1) ? nsdoc+'.'+name : 'document.all.'+name);
+  var img = document.images[name];
   if (name == '')
     return;
   if (img && img.altsrc) {
@@ -32,7 +32,7 @@ function na_preload_img()
 
 function na_change_img_src(name, nsdoc, rpath, preload)
 { 
-  var img = eval((navigator.appName.indexOf('Netscape', 0) != -1) ? nsdoc+'.'+name : 'document.all.'+name);
+  var img = document.images[name];
   if (name == '')
     return;
   if (img) {

@@ -60,6 +60,15 @@ YouTube에 업로드(한정공개 권장) 후 `data/videos.json`에 추가:
 ### 회지 추가
 PDF를 `pdfs/`에 넣고, 표지 추출(`sips -s format jpeg -Z 480 pdfs/파일.pdf --out covers/파일.jpg`) 후 `data/magazines.json`에 항목 추가.
 
+### 옛 홈페이지 아카이브 재생성
+```bash
+cd scripts
+python3 build_archive.py          # 원본 덤프 → archive/ 복사·압축
+python3 fix_archive_links.py      # 한글 링크 UTF-8 재인코딩
+python3 patch_archive_compat.py   # 모던 브라우저 호환 패치
+```
+순서를 지켜야 합니다 (build가 나머지 둘의 결과를 덮어씀).
+
 ### 연혁 수정
 `data/timeline.json`을 직접 편집하면 됩니다. (`scripts/extract_timeline.py`는 옛 홈페이지 DB에서 초안을 다시 뽑는 용도)
 

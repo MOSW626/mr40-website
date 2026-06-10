@@ -11,16 +11,14 @@ function na_hide_layer(lname)
 {
   if (document.layers)
     document.layers[lname].visibility = 'hide'    
-  if(document.all)
-    document.all(lname).style.visibility = 'hidden' 
+  var el = document.getElementById(lname); if (el) el.style.visibility = 'hidden' 
 }
 
 function na_show_layer(lname)
 {
   if(document.layers)
     document.layers[lname].visibility = 'show'   
-  if(document.all)
-    document.all(lname).style.visibility = 'visible' 
+  var el = document.getElementById(lname); if (el) el.style.visibility = 'visible' 
 }
 
 // -->
