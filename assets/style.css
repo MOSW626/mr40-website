@@ -14,6 +14,7 @@
   --nav-h:   60px;
 }
 
+/* data-era="retro"는 <body>에 설정한다 (timeline.html 레트로 구간) */
 [data-era="retro"] {
   --bg:     #0a0e14;
   --bg2:    #0a0e14;
