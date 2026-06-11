@@ -1,8 +1,19 @@
 // MR 40주년 사이트 설정 — 운영자는 이 파일만 수정하면 됩니다.
 const CONFIG = {
+  SITE_URL: "https://mosw626.github.io/mr40-website/",
+  OG_IMAGE: "assets/og-image.png",
+
   // 구글시트 '웹에 게시' CSV 주소 (미발급 시 "" — 페이지에 안내 표시됨)
   MEMBERS_CSV_URL: "",
   GUESTBOOK_CSV_URL: "",
+  OPS_SHEETS: {
+    notices: "",
+    event: "",
+    sponsors: "",
+    videos: "",
+    surveys: "",
+    stats: "",
+  },
   // 구글폼 주소
   MEMBERS_FORM_URL: "",
   GUESTBOOK_FORM_URL: "",
@@ -43,4 +54,27 @@ const CONFIG = {
   // 행사 정보
   EVENT_DATE: "2026-11-28T17:00:00+09:00",
   EVENT_PLACE: "미정",
+  EVENT_DETAILS: {
+    address: "",
+    fee: "",
+    refundPolicy: "",
+    attendanceCount: "",
+    liveUrl: "",
+    replayUrl: "",
+    photoUploadUrl: "",
+  },
+  PAYMENTS: {
+    cardUrl: "",
+    transferUrl: "",
+  },
+  MAP_LINKS: {
+    kakao: "",
+    naver: "",
+  },
+  CONTACT: {
+    phone: "",
+    sms: "",
+    openChat: "",
+    label: "준비위원회",
+  },
 };

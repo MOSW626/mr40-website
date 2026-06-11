@@ -11,16 +11,67 @@ function injectNav(active) {
   const items = [
     ["index.html", "홈"], ["timeline.html", "연혁"], ["members.html", "주소록"],
     ["gallery.html", "사진관"], ["magazine.html", "회지"], ["archive.html", "옛홈피"],
-    ["guestbook.html", "방명록"], ["event.html", "행사안내"],
+    ["guestbook.html", "방명록"], ["stats.html", "통계"], ["event.html", "행사안내"],
   ];
   const links = items.map(([href, label]) =>
     `<a href="${escapeHtml(href)}" class="nav-link${escapeHtml(href) === escapeHtml(active) ? " active" : ""}">${escapeHtml(label)}</a>`).join("");
   document.body.insertAdjacentHTML("afterbegin", `
     <nav class="topnav">
-      <a href="index.html" class="logo">MR<span>40</span></a>
-      <button class="nav-toggle" onclick="this.parentElement.classList.toggle('open')">☰</button>
-      <div class="nav-links">${links}</div>
+      <a href="index.html" class="logo" aria-label="MR40 처음으로">MR<span>40</span></a>
+      <div class="nav-actions">
+        <button class="font-toggle" type="button" aria-pressed="false" aria-label="글자 크게 보기">가+</button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span aria-hidden="true">☰</span> 메뉴</button>
+      </div>
+      <div class="nav-links" id="primary-nav">${links}</div>
     </nav>`);
+
+  const nav = document.querySelector(".topnav");
+  const menuButton = nav.querySelector(".nav-toggle");
+  const fontButton = nav.querySelector(".font-toggle");
+  const largeText = localStorage.getItem("mr40_large_text") === "1";
+  document.documentElement.classList.toggle("large-text", largeText);
+  fontButton.setAttribute("aria-pressed", String(largeText));
+  fontButton.textContent = largeText ? "가-" : "가+";
+
+  menuButton.addEventListener("click", function () {
+    const open = nav.classList.toggle("open");
+    menuButton.setAttribute("aria-expanded", String(open));
+  });
+  nav.querySelectorAll(".nav-link").forEach(function (link) {
+    link.addEventListener("click", function () {
+      nav.classList.remove("open");
+      menuButton.setAttribute("aria-expanded", "false");
+    });
+  });
+  fontButton.addEventListener("click", function () {
+    const enabled = !document.documentElement.classList.contains("large-text");
+    document.documentElement.classList.toggle("large-text", enabled);
+    localStorage.setItem("mr40_large_text", enabled ? "1" : "0");
+    fontButton.setAttribute("aria-pressed", String(enabled));
+    fontButton.textContent = enabled ? "가-" : "가+";
+  });
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <nav class="bottom-nav" aria-label="주요 메뉴">
+      <a href="index.html"${active === "index.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">⌂</span><span>홈</span></a>
+      <a href="gallery.html"${active === "gallery.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">▧</span><span>사진관</span></a>
+      <a href="members.html"${active === "members.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">♙</span><span>주소록</span></a>
+      <a href="event.html"${active === "event.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">☆</span><span>행사</span></a>
+    </nav>`);
+
+  const utility = document.createElement("div");
+  utility.className = "page-utilities";
+  utility.innerHTML =
+    '<button class="share-page" type="button" aria-label="이 페이지 공유">공유</button>' +
+    '<button class="back-to-top" type="button" aria-label="맨 위로">↑ 맨 위로</button>';
+  document.body.appendChild(utility);
+  utility.querySelector(".share-page").addEventListener("click", shareCurrentPage);
+  utility.querySelector(".back-to-top").addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  window.addEventListener("scroll", function () {
+    utility.querySelector(".back-to-top").classList.toggle("visible", window.scrollY > 600);
+  }, { passive: true });
 }
 
 // [2] CSV 한 줄 파서 (따옴표 내 쉼표 처리)
@@ -37,13 +88,110 @@ async function loadSheet(url, cacheKey, render, onFail) {
   if (cached) { try { render(JSON.parse(cached)); } catch (e) {} }
   if (!url) { if (!cached && onFail) onFail("not-configured"); return; }
   try {
-    const res = await fetch(url + "&t=" + Date.now());
+    const separator = url.indexOf("?") === -1 ? "?" : "&";
+    const res = await fetch(url + separator + "t=" + Date.now());
     if (!res.ok) throw new Error(res.status);
     const rows = (await res.text()).split(/\r?\n/).slice(1)
       .map(parseCsvLine).filter((r) => r.length > 1 && r[0]);
     localStorage.setItem(cacheKey, JSON.stringify(rows));
     render(rows);
   } catch (e) { if (!cached && onFail) onFail("fetch-error"); }
+}
+
+// 헤더 행을 키로 사용하는 운영 시트 로더.
+async function loadSheetObjects(url, cacheKey, render, onFail) {
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) { try { render(JSON.parse(cached)); } catch (e) {} }
+  if (!url) { if (!cached && onFail) onFail("not-configured"); return; }
+  try {
+    const separator = url.indexOf("?") === -1 ? "?" : "&";
+    const res = await fetch(url + separator + "t=" + Date.now());
+    if (!res.ok) throw new Error(res.status);
+    const lines = (await res.text()).split(/\r?\n/).filter(Boolean);
+    const headers = parseCsvLine(lines.shift() || "");
+    const rows = lines.map(parseCsvLine).map(function (values) {
+      const item = {};
+      headers.forEach(function (key, index) { item[key.trim()] = values[index] || ""; });
+      return item;
+    }).filter(function (item) { return Object.values(item).some(Boolean); });
+    localStorage.setItem(cacheKey, JSON.stringify(rows));
+    render(rows);
+  } catch (e) { if (!cached && onFail) onFail("fetch-error"); }
+}
+
+function safeUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value, location.href);
+    return /^(https?:|tel:|sms:|mailto:)$/.test(url.protocol) ? url.href : "";
+  } catch (e) { return ""; }
+}
+
+async function shareCurrentPage() {
+  const data = { title: document.title, text: document.querySelector('meta[name="description"]')?.content || "", url: location.href };
+  if (navigator.share) {
+    try { await navigator.share(data); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  try {
+    await navigator.clipboard.writeText(location.href);
+    showToast("주소를 복사했습니다.");
+  } catch (e) {
+    window.prompt("주소를 복사해 주세요.", location.href);
+  }
+}
+
+function enhanceCommonContent() {
+  document.querySelectorAll('a[target="_blank"]').forEach(function (link) {
+    if (link.querySelector(".new-window-note")) return;
+    const note = document.createElement("span");
+    note.className = "new-window-note";
+    note.textContent = " ↗ 새 창";
+    link.appendChild(note);
+    const label = link.getAttribute("aria-label") || link.textContent.trim();
+    link.setAttribute("aria-label", label + " (새 창)");
+  });
+  document.querySelectorAll(".site-footer").forEach(function (footer) {
+    if (footer.querySelector(".footer-home")) return;
+    const p = document.createElement("p");
+    p.className = "footer-home";
+    p.innerHTML = '<a href="index.html">← 처음으로</a>';
+    footer.insertBefore(p, footer.firstChild);
+    if (CONFIG.CONTACT && safeUrl(CONFIG.CONTACT.openChat) && !footer.querySelector(".footer-contact")) {
+      const contact = document.createElement("p");
+      contact.className = "footer-contact";
+      contact.innerHTML = '<a href="' + escapeHtml(safeUrl(CONFIG.CONTACT.openChat)) +
+        '" target="_blank" rel="noopener">문의 오픈채팅</a>';
+      footer.insertBefore(contact, footer.firstChild);
+    }
+  });
+
+  const noticeUrl = CONFIG.OPS_SHEETS && CONFIG.OPS_SHEETS.notices;
+  if (noticeUrl && !document.querySelector(".site-notice")) {
+    loadSheetObjects(noticeUrl, "mr40_ops_notices", function (rows) {
+      const now = Date.now();
+      const notice = rows.find(function (item) {
+        const active = !item.active || /^(1|true|yes|y|공개)$/i.test(item.active);
+        const afterStart = !item.starts_at || new Date(item.starts_at).getTime() <= now;
+        const beforeEnd = !item.ends_at || new Date(item.ends_at).getTime() >= now;
+        return active && afterStart && beforeEnd;
+      });
+      if (!notice || document.querySelector(".site-notice")) return;
+      const bar = document.createElement("aside");
+      bar.className = "site-notice";
+      bar.setAttribute("aria-label", "공지");
+      const href = safeUrl(notice.link);
+      bar.innerHTML = '<strong>' + escapeHtml(notice.title || "공지") + '</strong> ' +
+        '<span>' + escapeHtml(notice.body || "") + '</span>' +
+        (href ? ' <a href="' + escapeHtml(href) + '">' + escapeHtml(notice.label || "자세히") + '</a>' : "");
+      document.body.insertBefore(bar, document.body.firstChild.nextSibling);
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", enhanceCommonContent);
+} else {
+  enhanceCommonContent();
 }
 
 // [4] 토스트

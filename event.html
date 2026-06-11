@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="2026년 MR 창립 40주년 기념행사 안내" />
+  <meta property="og:title" content="40주년 행사 안내 — MR 40" /><meta property="og:description" content="2026년 11월 28일, MR 창립 40주년 기념행사 안내입니다." />
+  <meta property="og:image" content="https://mosw626.github.io/mr40-website/assets/og-image.png" /><meta property="og:url" content="https://mosw626.github.io/mr40-website/event.html" />
+  <meta property="og:type" content="website" /><meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.png" /><link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <title>행사 안내 — MR 40</title>
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
@@ -13,6 +18,7 @@
   <!-- 설정 & 공통 스크립트 -->
   <script src="config.js"></script>
   <script src="assets/common.js"></script>
+  <script src="assets/ops.js"></script>
 
   <style>
     /* ── 페이지 헤더 ── */
@@ -204,6 +210,34 @@
       padding: 1rem;
     }
 
+    .event-tools, .payment-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      margin: 1rem 0 2rem;
+    }
+
+    .event-tool, .payment-btn {
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1.2rem;
+      border: 1px solid var(--accent);
+      border-radius: 9999px;
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .payment-btn { background: var(--accent); color: #fff; }
+    .disabled { opacity: 0.5; pointer-events: none; }
+    .event-extra { margin: 0 auto 2rem; max-width: 760px; }
+    .event-extra h2 { font-size: 1.2rem; margin-bottom: .75rem; }
+    .event-extra p { color: var(--muted); line-height: 1.75; }
+    .live-frame { width: 100%; aspect-ratio: 16/9; border: 0; border-radius: .8rem; margin-top: 1rem; }
+
     /* ── 사이트 푸터 ── */
     .site-footer {
       border-top: 1px solid rgba(91, 140, 255, 0.12);
@@ -243,7 +277,32 @@
       <span class="cta-note">동문·현역 누구나 환영합니다</span>
     </div>
 
+    <div class="event-tools">
+      <button class="event-tool" id="calendar-btn" type="button">캘린더에 추가</button>
+      <a class="event-tool disabled" id="kakao-map" href="#" target="_blank" rel="noopener">카카오맵 준비 중</a>
+      <a class="event-tool disabled" id="naver-map" href="#" target="_blank" rel="noopener">네이버지도 준비 중</a>
+      <a class="event-tool" href="day.html">행사 당일 안내</a>
+    </div>
+
     <div class="ev-grid" id="ev-info"></div>
+
+    <section class="event-extra card" id="attendance-box">
+      <h2>참석 현황</h2><p id="attendance-copy">참석 인원을 집계하고 있습니다.</p>
+    </section>
+
+    <section class="event-extra card">
+      <h2>참가비 결제</h2>
+      <p id="payment-copy">결제 수단과 금액을 준비하고 있습니다. 결제자명은 참석 조사 이름과 같게 입력해 주세요.</p>
+      <div class="payment-grid">
+        <a class="payment-btn disabled" id="card-payment" href="#" target="_blank" rel="noopener">카드 결제 준비 중</a>
+        <a class="payment-btn disabled" id="transfer-payment" href="#" target="_blank" rel="noopener">간편 송금 준비 중</a>
+      </div>
+      <p id="refund-copy">환불 규정은 확정되는 대로 안내합니다.</p>
+    </section>
+
+    <section class="event-extra card" id="live-box">
+      <h2>온라인 중계</h2><p id="live-copy">라이브 방송 주소를 준비하고 있습니다.</p><div id="live-host"></div>
+    </section>
 
     <section class="ev-program">
       <h2>프로그램</h2>
@@ -312,13 +371,7 @@
 
     // ── 참가 신청 (SURVEYS의 참석 조사 우선, 없으면 EVENT_FORM_URL) ──
     document.getElementById("apply-btn").addEventListener("click", function () {
-      var attend = (CONFIG.SURVEYS || []).find(function (s) { return s.id === "attend" && s.active; });
-      var url = (attend && attend.url) || CONFIG.EVENT_FORM_URL;
-      if (!url) {
-        showToast("참석 조사가 곧 열립니다. 조금만 기다려 주세요!");
-        return;
-      }
-      window.open(url, "_blank", "noopener,noreferrer");
+      location.href = "survey.html?id=attend";
     });
 
     // ── 정보 카드 ──
@@ -344,6 +397,57 @@
           "</span></div>";
       }).join("");
     }
+
+    function setLink(id, url, label) {
+      var el = document.getElementById(id);
+      url = safeUrl(url);
+      if (!url) return;
+      el.href = url;
+      el.textContent = label;
+      el.classList.remove("disabled");
+    }
+
+    document.getElementById("calendar-btn").addEventListener("click", function () {
+      var end = new Date(target.getTime() + 4 * 60 * 60 * 1000);
+      function icsDate(date) { return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); }
+      var lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MR40//KO", "BEGIN:VEVENT",
+        "UID:mr40-2026@mr40", "DTSTAMP:" + icsDate(new Date()), "DTSTART:" + icsDate(target),
+        "DTEND:" + icsDate(end), "SUMMARY:MR 창립 40주년 기념행사",
+        "LOCATION:" + String(CONFIG.EVENT_PLACE || "").replace(/[,;]/g, " "), "END:VEVENT", "END:VCALENDAR"
+      ];
+      var blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(blob); link.download = "MR40-event.ics"; link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+    });
+
+    MR40Ops.rows("event").then(function (rows) {
+      var data = MR40Ops.eventMap(rows);
+      var place = data.place || CONFIG.EVENT_PLACE;
+      if (place && place !== "미정") document.getElementById("ev-place").textContent = place;
+      setLink("kakao-map", data.kakao_map || CONFIG.MAP_LINKS.kakao, "카카오맵으로 보기");
+      setLink("naver-map", data.naver_map || CONFIG.MAP_LINKS.naver, "네이버지도로 보기");
+      setLink("card-payment", data.card_payment || CONFIG.PAYMENTS.cardUrl, "카드 결제");
+      setLink("transfer-payment", data.transfer_payment || CONFIG.PAYMENTS.transferUrl, "간편 송금");
+      var fee = data.fee || CONFIG.EVENT_DETAILS.fee;
+      if (fee) document.getElementById("payment-copy").textContent = "참가비 " + fee + " · 결제자명은 참석 조사 이름과 같게 입력해 주세요.";
+      var refund = data.refund_policy || CONFIG.EVENT_DETAILS.refundPolicy;
+      if (refund) document.getElementById("refund-copy").textContent = refund;
+      var attendance = data.attendance_count || CONFIG.EVENT_DETAILS.attendanceCount;
+      if (attendance) document.getElementById("attendance-copy").textContent = "현재까지 " + attendance + "명 참석 예정입니다.";
+      var live = safeUrl(data.live_url || CONFIG.EVENT_DETAILS.liveUrl);
+      var replay = safeUrl(data.replay_url || CONFIG.EVENT_DETAILS.replayUrl);
+      var media = Date.now() >= target.getTime() && live ? live : replay || live;
+      if (media) {
+        document.getElementById("live-copy").innerHTML = '<a href="' + media + '" target="_blank" rel="noopener">' +
+          (replay && media === replay ? "다시보기 열기" : "지금 라이브로 보기") + '</a>';
+        var youtube = media.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|live\/))([^?&/]+)/);
+        if (youtube) document.getElementById("live-host").innerHTML =
+          '<iframe class="live-frame" title="MR40 온라인 중계" src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(youtube[1]) + '" allowfullscreen></iframe>';
+      }
+      enhanceCommonContent();
+    });
   })();
   </script>
 </body>

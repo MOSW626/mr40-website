@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1530"/>
+      <stop offset="1" stop-color="#1c397d"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#5b8cff" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#5b8cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="920" cy="170" r="430" fill="url(#glow)"/>
+  <path d="M70 90H1130M70 180H1130M70 270H1130M70 360H1130M70 450H1130M70 540H1130M150 40V590M310 40V590M470 40V590M630 40V590M790 40V590M950 40V590"
+        stroke="#5b8cff" stroke-opacity=".08"/>
+  <text x="82" y="160" fill="#5b8cff" font-family="Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="8">KAIST MICRO ROBOT</text>
+  <text x="76" y="345" fill="#ffffff" font-family="Arial, sans-serif" font-size="150" font-weight="900">MR<tspan fill="#5b8cff">40</tspan></text>
+  <text x="84" y="435" fill="#ffffff" font-family="Arial, sans-serif" font-size="48" font-weight="700">로봇과 함께한 마흔 해</text>
+  <text x="86" y="505" fill="#aab7d6" font-family="Arial, sans-serif" font-size="30">1986 — 2026 · 창립 40주년 기념 홈페이지</text>
+</svg>

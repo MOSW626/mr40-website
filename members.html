@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MR 동문 주소록" />
+  <meta property="og:title" content="동문 주소록 — MR 40" /><meta property="og:description" content="선배, 동기, 후배의 소식을 다시 만나는 동문 주소록입니다." />
+  <meta property="og:image" content="https://mosw626.github.io/mr40-website/assets/og-image.png" /><meta property="og:url" content="https://mosw626.github.io/mr40-website/members.html" />
+  <meta property="og:type" content="website" /><meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.png" /><link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <title>주소록 — MR 40</title>
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
@@ -332,7 +337,8 @@
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
-      padding: 0.5rem 0.5rem;
+      min-height: 44px;
+      padding: 0.65rem 0.5rem;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 0.5rem;
@@ -454,6 +460,8 @@
       <div class="gate-input-row">
         <input
           type="password"
+          inputmode="numeric"
+          pattern="[0-9]*"
           id="code-input"
           class="gate-input"
           placeholder="접속 코드"
@@ -732,6 +740,13 @@
       var copyHtml = "";
       var btns = [];
       if (phone.trim()) {
+        var tel = phone.trim().replace(/[^0-9+]/g, "");
+        btns.push(
+          '<a class="copy-btn" href="tel:' + escapeHtml(tel) + '" aria-label="' +
+          escapeHtml(name) + '에게 전화">' +
+          "📞 전화" +
+          "</a>"
+        );
         btns.push(
           '<button class="copy-btn" ' +
           'data-copy="' + escapeHtml(phone.trim()) + '" ' +

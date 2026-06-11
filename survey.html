@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MR 40주년 행사 설문 참여 안내" />
+  <meta property="og:title" content="설문 참여 — MR 40" /><meta property="og:description" content="MR 40주년 준비를 위한 설문에 참여해 주세요." />
+  <meta property="og:image" content="https://mosw626.github.io/mr40-website/assets/og-image.png" /><meta property="og:url" content="https://mosw626.github.io/mr40-website/survey.html" />
+  <meta property="og:type" content="website" /><meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.png" /><link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <title>설문 참여 — MR 40</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="config.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="assets/ops.js"></script>
+  <style>
+    .survey-wrap { max-width: 900px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+    .survey-head { text-align: center; margin-bottom: 1.5rem; }
+    .survey-head h1 { font-size: clamp(1.7rem, 6vw, 2.5rem); margin-bottom: 0.6rem; }
+    .survey-head p { color: var(--muted); line-height: 1.7; }
+    .survey-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin: 1.25rem 0; }
+    .survey-actions a, .survey-actions button { min-height: 48px; padding: 0.8rem 1.2rem; border-radius: 9999px; font-weight: 700; }
+    .survey-open { background: var(--accent); color: white; text-decoration: none; }
+    .survey-open.disabled { opacity: 0.55; pointer-events: none; }
+    .form-frame { width: 100%; min-height: 1050px; border: 1px solid rgba(255,255,255,.16); border-radius: 1rem; background: white; }
+    .fallback { padding: 2rem; text-align: center; color: var(--muted); }
+    .contact-box { margin-top: 1.25rem; padding: 1.25rem; text-align: center; line-height: 1.8; }
+    .contact-box a { color: var(--accent); text-decoration: underline; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <script>injectNav("survey.html");</script>
+  <main class="survey-wrap">
+    <header class="survey-head">
+      <h1 id="survey-title">설문 참여</h1>
+      <p id="survey-desc">아래 문항을 작성한 뒤 마지막의 보내기 버튼을 눌러 주세요.</p>
+    </header>
+    <div class="survey-actions">
+      <a class="survey-open disabled" id="external-form" href="#" target="_blank" rel="noopener">설문을 새 창에서 열기</a>
+    </div>
+    <div id="form-host"><p class="fallback card">설문 링크를 준비하고 있습니다.</p></div>
+    <aside class="contact-box card" id="contact-box">
+      폼 사용이 어려우면 준비위원회에 전화나 문자로 접수할 수 있습니다.<br>
+      <span id="contact-links">연락처 준비 중</span>
+    </aside>
+  </main>
+  <footer class="site-footer"><p class="footer-name">KAIST 마이크로 로봇 동아리 MR · Since 1986</p><p class="footer-note">© 2026 MR 40주년 준비위원회</p></footer>
+  <script>
+  (function () {
+    var id = new URLSearchParams(location.search).get("id") || "attend";
+    var generation = new URLSearchParams(location.search).get("generation") || "";
+    var fallback = (CONFIG.SURVEYS || []).find(function (s) { return s.id === id; });
+    MR40Ops.rows("surveys").then(function (rows) {
+      var sheet = rows.find(function (s) { return s.id === id && MR40Ops.active(s); });
+      var survey = Object.assign({}, fallback || {}, sheet || {});
+      document.getElementById("survey-title").textContent = survey.title || "설문 참여";
+      document.getElementById("survey-desc").textContent = survey.desc || "아래 문항을 작성한 뒤 마지막의 보내기 버튼을 눌러 주세요.";
+      var url = safeUrl(survey.url);
+      if (url && generation && survey.prefill_generation_key) {
+        var u = new URL(url);
+        u.searchParams.set(survey.prefill_generation_key, generation);
+        url = u.href;
+      }
+      if (!url) return;
+      var external = document.getElementById("external-form");
+      external.href = url;
+      external.classList.remove("disabled");
+      document.getElementById("form-host").innerHTML =
+        '<iframe class="form-frame" title="' + escapeHtml(survey.title || "설문") + '" src="' + escapeHtml(url) + '">설문을 불러올 수 없습니다.</iframe>';
+    });
+
+    var links = [];
+    var phone = CONFIG.CONTACT && safeUrl("tel:" + (CONFIG.CONTACT.phone || ""));
+    var sms = CONFIG.CONTACT && safeUrl("sms:" + (CONFIG.CONTACT.sms || CONFIG.CONTACT.phone || ""));
+    if (CONFIG.CONTACT && CONFIG.CONTACT.phone) links.push('<a href="' + phone + '">전화 ' + escapeHtml(CONFIG.CONTACT.phone) + '</a>');
+    if (CONFIG.CONTACT && (CONFIG.CONTACT.sms || CONFIG.CONTACT.phone)) links.push('<a href="' + sms + '">문자 보내기</a>');
+    if (links.length) document.getElementById("contact-links").innerHTML = links.join(" · ");
+  })();
+  </script>
+</body>
+</html>

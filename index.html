@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="KAIST 마이크로 로봇 동아리 MR 창립 40주년 기념 홈페이지" />
+  <meta property="og:title" content="MR 40 — 로봇과 함께한 마흔 해" />
+  <meta property="og:description" content="1986년부터 2026년까지, MR의 40년 기록과 사람들을 만납니다." />
+  <meta property="og:image" content="https://mosw626.github.io/mr40-website/assets/og-image.png" />
+  <meta property="og:url" content="https://mosw626.github.io/mr40-website/" />
+  <meta property="og:type" content="website" /><meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.png" /><link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <title>MR 40 — KAIST 마이크로 로봇 동아리 40주년</title>
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
@@ -13,6 +20,7 @@
   <!-- 설정 & 공통 스크립트 -->
   <script src="config.js"></script>
   <script src="assets/common.js"></script>
+  <script src="assets/ops.js"></script>
 
   <style>
     /* ── 히어로 ── */
@@ -362,6 +370,12 @@
           <p class="card-desc">2026.11.28 — 40주년 기념행사</p>
         </a>
 
+        <a href="stats.html" class="section-card card">
+          <span class="card-icon" aria-hidden="true">📊</span>
+          <p class="card-title">숫자로 보는 MR</p>
+          <p class="card-desc">사진·회지와 공개 가능한 동문 통계</p>
+        </a>
+
       </div>
     </div>
   </section>
@@ -508,10 +522,19 @@
         }).join("");
       }
 
-      fetch("data/sponsors.json")
+      function loadFallbackSponsors() {
+        return fetch("data/sponsors.json")
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(renderSponsors)
         .catch(function () { renderSponsors([]); });
+      }
+      MR40Ops.rows("sponsors").then(function (items) {
+        items = items.filter(MR40Ops.active).sort(function (a, b) {
+          return MR40Ops.number(a.sort, 0) - MR40Ops.number(b.sort, 0);
+        });
+        if (items.length) renderSponsors(items);
+        else loadFallbackSponsors();
+      });
     })();
   </script>
 
@@ -645,6 +668,34 @@
 
     .wm-later:hover { color: var(--text); }
 
+    .wm-payments {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin-top: 0.9rem;
+    }
+
+    .wm-payment {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 0.65rem;
+      border: 1px solid rgba(91, 140, 255, 0.45);
+      border-radius: 0.7rem;
+      color: var(--accent);
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .wm-payment.disabled {
+      color: var(--muted);
+      border-color: rgba(255,255,255,.15);
+      opacity: .65;
+      pointer-events: none;
+    }
+
     /* 설문 목록 버튼 */
     .wm-survey {
       display: flex;
@@ -765,6 +816,10 @@
       <p class="wm-date">2026년 11월 28일 (토) 기념행사</p>
       <p class="wm-copy">잠깐 시간 내어 참여해 주시면 준비에 큰 힘이 됩니다.</p>
       <div id="wm-surveys"></div>
+      <div class="wm-payments">
+        <a class="wm-payment disabled" id="wm-card-payment" href="#" target="_blank" rel="noopener">카드 결제 준비 중</a>
+        <a class="wm-payment disabled" id="wm-transfer-payment" href="#" target="_blank" rel="noopener">간편 송금 준비 중</a>
+      </div>
       <button class="wm-later" id="wm-later" type="button">다음에 할게요</button>
     </div>
   </div>
@@ -805,30 +860,60 @@
       });
 
       function openSurvey(s) {
-        if (s && s.url) {
-          window.open(s.url, "_blank", "noopener,noreferrer");
-        } else {
-          showToast("이 설문은 곧 열립니다. 조금만 기다려 주세요!");
-        }
+        if (!s) return;
+        location.href = "survey.html?id=" + encodeURIComponent(s.id || "attend");
       }
 
       // 히어로 하단 상시 노출 링크 ("다음에 할게요" 이후에도 계속 접근 가능)
       var heroEl = document.getElementById("hero-surveys");
-      if (surveys.length > 0) {
+      function renderHeroSurveys() {
+        if (surveys.length === 0) { heroEl.innerHTML = ""; return; }
         heroEl.innerHTML = surveys.map(function (s, i) {
           return '<button class="hero-survey-pill" data-idx="' + i + '" type="button">' +
             escapeHtml(s.icon || "📋") + " " + escapeHtml(s.title) +
             (s.url ? "" : ' <span class="hp-soon">준비 중</span>') +
             "</button>";
         }).join("");
-        heroEl.addEventListener("click", function (e) {
-          var btn = e.target.closest(".hero-survey-pill");
-          if (!btn) return;
-          openSurvey(surveys[parseInt(btn.getAttribute("data-idx"), 10)]);
-        });
       }
+      heroEl.addEventListener("click", function (e) {
+        var btn = e.target.closest(".hero-survey-pill");
+        if (!btn) return;
+        openSurvey(surveys[parseInt(btn.getAttribute("data-idx"), 10)]);
+      });
 
       renderSurveys();
+      renderHeroSurveys();
+      MR40Ops.rows("surveys").then(function (sheetSurveys) {
+        sheetSurveys = sheetSurveys.filter(MR40Ops.active);
+        if (!sheetSurveys.length) return;
+        surveys = sheetSurveys;
+        renderSurveys();
+        renderHeroSurveys();
+      });
+      MR40Ops.rows("event").then(function (eventRows) {
+        var data = MR40Ops.eventMap(eventRows);
+        [
+          ["wm-card-payment", data.card_payment || CONFIG.PAYMENTS.cardUrl, "카드 결제"],
+          ["wm-transfer-payment", data.transfer_payment || CONFIG.PAYMENTS.transferUrl, "간편 송금"],
+        ].forEach(function (item) {
+          var url = safeUrl(item[1]);
+          if (!url) return;
+          var link = document.getElementById(item[0]);
+          link.href = url;
+          link.textContent = item[2];
+          link.classList.remove("disabled");
+        });
+        var eventTime = new Date(CONFIG.EVENT_DATE).getTime();
+        var live = safeUrl(data.live_url || CONFIG.EVENT_DETAILS.liveUrl);
+        var replay = safeUrl(data.replay_url || CONFIG.EVENT_DETAILS.replayUrl);
+        var featured = Date.now() >= eventTime && live ? live : (Date.now() > eventTime && replay ? replay : "");
+        if (featured) {
+          document.getElementById("dday-content").innerHTML =
+            '<a class="wm-apply" href="' + featured + '" target="_blank" rel="noopener">' +
+            (featured === replay ? "행사 다시보기" : "지금 라이브로 보기") + "</a>";
+        }
+        enhanceCommonContent();
+      });
 
       // 세션당 1회 자동 표시 (행사 종료 후에는 자동으로 안 뜸)
       var eventOver = new Date(CONFIG.EVENT_DATE).getTime() <= Date.now();
