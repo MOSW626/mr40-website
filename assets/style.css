@@ -253,6 +253,14 @@ iframe:focus-visible {
   outline-offset: 3px;
 }
 
+.survey-fab,
+.wm-apply,
+.ev-apply-btn,
+.payment-btn,
+.gal-tab.active {
+  color: #07142f !important;
+}
+
 .page-utilities {
   position: fixed;
   right: 1rem;
@@ -373,6 +381,7 @@ iframe:focus-visible {
 @media (max-width: 480px) {
   .music-fab { bottom: 5.2rem; left: 0.75rem; }
   .music-fab .music-title { display: none; }
+  .hidden-xs { display: none; }
 }
 
 /* ---------- 공통 유틸 ---------- */
@@ -418,25 +427,36 @@ iframe:focus-visible {
 /* 시니어 접근성: 배지·날짜·보조 설명도 14px 아래로 내려가지 않는다. */
 .section-card .card-title .lock,
 .logo-chip .logo-era,
+.dday-caption,
 .wm-survey .ws-desc,
 .wm-survey .ws-soon,
+.wm-later,
 .hero-survey-pill .hp-soon,
 .ev-cta .cta-note,
+.ev-dday .label,
+.program-row .time,
 .program-row .what small,
 .ev-tbd,
+.cohort-badge,
 .org-badge,
 .interest-tag,
 .copy-btn,
 .state-notice .hint,
 .privacy-note,
 .tl-date,
+.tl-vod-label,
 .tl-vod-label .ext,
+.book-cover .cover-placeholder small,
 .book-meta .book-year,
 .book-meta .book-note,
 .gb-cohort-badge,
 .gb-date,
 .ar-note,
 .ar-screen .ar-prompt,
+.ar-body p,
+.page-utilities button,
+.music-fab,
+.new-window-note,
 .bottom-nav a {
   font-size: 0.875rem !important;
   line-height: 1.45;

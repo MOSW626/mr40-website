@@ -11,8 +11,6 @@
   <title>행사 안내 — MR 40</title>
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <!-- 공통 스타일 -->
   <link rel="stylesheet" href="assets/style.css" />
   <!-- 설정 & 공통 스크립트 -->
@@ -139,7 +137,7 @@
       .ev-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
-    .ev-card h3 {
+    .ev-card h2 {
       font-size: 0.95rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
@@ -226,7 +224,8 @@
       padding: 0.8rem 1.2rem;
       border: 1px solid var(--accent);
       border-radius: 9999px;
-      color: var(--accent);
+      background: #0b1530;
+      color: #b8caff;
       font-weight: 700;
       text-decoration: none;
     }
@@ -269,7 +268,7 @@
     <p class="ev-place-line" id="ev-place"></p>
   </header>
 
-  <div class="container">
+  <main class="container">
     <div class="ev-dday" id="ev-dday"></div>
 
     <div class="ev-cta">
@@ -308,7 +307,7 @@
       <h2>프로그램</h2>
       <div id="program-list"></div>
     </section>
-  </div>
+  </main>
 
   <footer class="site-footer">
     <p class="footer-name">KAIST 마이크로 로봇 동아리 MR · Since 1986</p>
@@ -379,7 +378,7 @@
         var body = card.lines.length
           ? "<ul>" + card.lines.map(function (line) { return "<li>" + escapeHtml(line) + "</li>"; }).join("") + "</ul>"
           : "<p>추후 공지</p>";
-        return '<div class="ev-card card"><h3>' + escapeHtml(card.title) + "</h3>" + body + "</div>";
+        return '<div class="ev-card card"><h2>' + escapeHtml(card.title) + "</h2>" + body + "</div>";
       }).join("");
     }
     renderInfo({});

@@ -19,7 +19,7 @@ function injectNav(active) {
     <nav class="topnav">
       <a href="index.html" class="logo" aria-label="MR40 처음으로">MR<span>40</span></a>
       <div class="nav-actions">
-        <button class="font-toggle" type="button" aria-pressed="false" aria-label="글자 크게 보기">가+</button>
+        <button class="font-toggle" type="button" aria-pressed="false" aria-label="가+ 글자 크게 보기">가+</button>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span aria-hidden="true">☰</span> 메뉴</button>
       </div>
       <div class="nav-links" id="primary-nav">${links}</div>
@@ -32,6 +32,7 @@ function injectNav(active) {
   document.documentElement.classList.toggle("large-text", largeText);
   fontButton.setAttribute("aria-pressed", String(largeText));
   fontButton.textContent = largeText ? "가-" : "가+";
+  fontButton.setAttribute("aria-label", largeText ? "가- 기본 글자 크기로 보기" : "가+ 글자 크게 보기");
 
   menuButton.addEventListener("click", function () {
     const open = nav.classList.toggle("open");
@@ -49,6 +50,7 @@ function injectNav(active) {
     localStorage.setItem("mr40_large_text", enabled ? "1" : "0");
     fontButton.setAttribute("aria-pressed", String(enabled));
     fontButton.textContent = enabled ? "가-" : "가+";
+    fontButton.setAttribute("aria-label", enabled ? "가- 기본 글자 크기로 보기" : "가+ 글자 크게 보기");
   });
 
   document.body.insertAdjacentHTML("beforeend", `

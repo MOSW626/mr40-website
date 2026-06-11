@@ -1,5 +1,6 @@
 import re
 import csv
+import json
 import unittest
 from pathlib import Path
 
@@ -51,6 +52,7 @@ class TestSiteStatic(unittest.TestCase):
         self.assertIn('role="dialog"', html)
         self.assertIn("history.pushState", html)
         self.assertIn('aria-modal="true"', html)
+        self.assertIn('fetchpriority="high"', html)
 
     def test_member_code_uses_numeric_keyboard(self):
         html = (ROOT / "members.html").read_text(encoding="utf-8")
@@ -62,6 +64,56 @@ class TestSiteStatic(unittest.TestCase):
         for name in ["404.html", "survey.html", "stats.html", "day.html"]:
             with self.subTest(page=name):
                 self.assertTrue((ROOT / name).is_file())
+
+    def test_accessibility_font_overrides_cover_small_information_text(self):
+        css = (ROOT / "assets" / "style.css").read_text(encoding="utf-8")
+        selectors = [
+            ".dday-caption",
+            ".wm-later",
+            ".ev-dday .label",
+            ".program-row .time",
+            ".cohort-badge",
+            ".book-cover .cover-placeholder small",
+            ".ar-body p",
+            ".page-utilities button",
+            ".music-fab",
+            ".new-window-note",
+        ]
+        override = re.search(
+            r"/\* 시니어 접근성.*?\*/(?P<selectors>.*?)\{"
+            r"\s*font-size:\s*0\.875rem\s*!important;",
+            css,
+            re.S,
+        )
+        self.assertIsNotNone(override)
+        for selector in selectors:
+            with self.subTest(selector=selector):
+                self.assertIn(selector, override.group("selectors"))
+
+    def test_404_has_icons(self):
+        html = (ROOT / "404.html").read_text(encoding="utf-8")
+        self.assertIn('rel="icon"', html)
+        self.assertIn('rel="apple-touch-icon"', html)
+
+    def test_pages_do_not_load_unused_tailwind_runtime(self):
+        for name in PUBLIC_PAGES:
+            html = (ROOT / name).read_text(encoding="utf-8")
+            with self.subTest(page=name):
+                self.assertNotIn("cdn.tailwindcss.com", html)
+
+    def test_gallery_year_data_matches_full_gallery(self):
+        full_gallery = json.loads(
+            (ROOT / "data" / "gallery.json").read_text(encoding="utf-8"))
+        year_dir = ROOT / "data" / "gallery-years"
+        index = json.loads(
+            (year_dir / "index.json").read_text(encoding="utf-8"))
+        self.assertEqual(sum(entry["count"] for entry in index), len(full_gallery))
+        for entry in index:
+            filename = Path(entry["file"]).name
+            with self.subTest(filename=filename):
+                items = json.loads(
+                    (year_dir / filename).read_text(encoding="utf-8"))
+                self.assertEqual(len(items), entry["count"])
 
     def test_operations_sheet_templates_keep_expected_headers(self):
         expected = {

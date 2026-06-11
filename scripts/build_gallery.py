@@ -65,6 +65,36 @@ def collect_sources(listfile):
     )
 
 
+def write_gallery_data(items, data_dir):
+    data_dir.mkdir(exist_ok=True)
+    (data_dir / "gallery.json").write_text(
+        json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    years_dir = data_dir / "gallery-years"
+    years_dir.mkdir(exist_ok=True)
+    groups = {}
+    for item in items:
+        key = "unknown" if item["year"] is None else str(item["year"])
+        groups.setdefault(key, []).append(item)
+
+    index = []
+    for key, group in sorted(
+            groups.items(),
+            key=lambda pair: -1 if pair[0] == "unknown" else int(pair[0])):
+        filename = f"{key}.json"
+        (years_dir / filename).write_text(
+            json.dumps(group, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8")
+        index.append({
+            "year": None if key == "unknown" else int(key),
+            "count": len(group),
+            "file": f"data/gallery-years/{filename}",
+        })
+    (years_dir / "index.json").write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
+
+
 def main():
     args = sys.argv[1:]
     full_out = None
@@ -81,9 +111,7 @@ def main():
         except Exception as e:
             errors.append(f"{src}: {e}")
     items.sort(key=lambda x: (x["year"] or 0, x["src"]))
-    (SITE / "data").mkdir(exist_ok=True)
-    (SITE / "data" / "gallery.json").write_text(
-        json.dumps(items, ensure_ascii=False, indent=1))
+    write_gallery_data(items, SITE / "data")
     print(f"완료: {len(items)}장, 실패 {len(errors)}건")
     for e in errors:
         print("  !", e)

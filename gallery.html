@@ -11,8 +11,6 @@
   <title>사진관 — MR 40</title>
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <!-- 공통 스타일 -->
   <link rel="stylesheet" href="assets/style.css" />
   <!-- 설정 & 공통 스크립트 -->
@@ -105,6 +103,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 0.5rem;
+      min-height: 60vh;
       padding-bottom: 3rem;
     }
 
@@ -344,23 +343,23 @@
     <p class="gal-subtitle">40년의 순간들 — 역대 활동 사진과 영상 아카이브</p>
   </header>
 
-  <div class="container">
+  <main class="container">
     <div class="gal-tabs" role="tablist">
-      <button class="gal-tab active" id="tab-photos" type="button">📷 사진</button>
-      <button class="gal-tab" id="tab-videos" type="button">🎬 영상</button>
+      <button class="gal-tab active" id="tab-photos" type="button" role="tab" aria-selected="true" aria-controls="panel-photos">📷 사진</button>
+      <button class="gal-tab" id="tab-videos" type="button" role="tab" aria-selected="false" aria-controls="panel-videos">🎬 영상</button>
     </div>
 
     <!-- 사진 탭 -->
-    <section id="panel-photos">
+    <section id="panel-photos" role="tabpanel" aria-labelledby="tab-photos">
       <div class="year-chips" id="year-chips"></div>
       <div class="photo-grid" id="photo-grid"></div>
     </section>
 
     <!-- 영상 탭 -->
-    <section id="panel-videos" hidden>
+    <section id="panel-videos" role="tabpanel" aria-labelledby="tab-videos" hidden>
       <div class="video-list" id="video-list"></div>
     </section>
-  </div>
+  </main>
 
   <!-- 라이트박스 -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 크게 보기" aria-hidden="true">
@@ -380,7 +379,8 @@
   (function () {
     "use strict";
 
-    var allPhotos = [];      // gallery.json 전체
+    var galleryIndex = [];   // 연도별 파일 인덱스
+    var photoCache = {};     // 이미 불러온 연도별 목록
     var viewPhotos = [];     // 현재 필터 적용된 목록 (라이트박스 탐색 기준)
     var currentYear = "all"; // "all" | "unknown" | 숫자 문자열
     var lbIndex = 0;
@@ -399,6 +399,10 @@
       var isPhotos = name !== "videos";
       tabPhotos.classList.toggle("active", isPhotos);
       tabVideos.classList.toggle("active", !isPhotos);
+      tabPhotos.setAttribute("aria-selected", String(isPhotos));
+      tabVideos.setAttribute("aria-selected", String(!isPhotos));
+      tabPhotos.tabIndex = isPhotos ? 0 : -1;
+      tabVideos.tabIndex = isPhotos ? -1 : 0;
       panelPhotos.hidden = !isPhotos;
       panelVideos.hidden = isPhotos;
       // 해시로 탭 상태 보존 (#photos / #videos)
@@ -420,11 +424,11 @@
     }
 
     function buildChips() {
-      var years = [];
-      var hasUnknown = false;
-      allPhotos.forEach(function (p) {
-        if (p.year === null || p.year === undefined) { hasUnknown = true; return; }
-        if (years.indexOf(p.year) === -1) years.push(p.year);
+      var years = galleryIndex.filter(function (item) {
+        return item.year !== null && item.year !== undefined;
+      }).map(function (item) { return item.year; });
+      var hasUnknown = galleryIndex.some(function (item) {
+        return item.year === null || item.year === undefined;
       });
       years.sort(function (a, b) { return a - b; });
 
@@ -441,18 +445,12 @@
     chipsEl.addEventListener("click", function (e) {
       var btn = e.target.closest(".year-chip");
       if (!btn) return;
-      currentYear = btn.getAttribute("data-year");
-      buildChips();
-      renderGrid();
+      selectYear(btn.getAttribute("data-year"));
     });
 
-    function renderGrid() {
+    function renderGrid(photos) {
       gridEl.innerHTML = "";
-      viewPhotos = allPhotos.filter(function (p) {
-        if (currentYear === "all") return true;
-        if (currentYear === "unknown") return p.year === null || p.year === undefined;
-        return String(p.year) === currentYear;
-      });
+      viewPhotos = photos || [];
 
       if (viewPhotos.length === 0) {
         gridEl.innerHTML = '<p class="gal-status" style="grid-column:1/-1;">아직 사진이 없습니다.</p>';
@@ -460,6 +458,43 @@
       }
       renderedCount = 0;
       appendBatch();
+    }
+
+    function fetchJson(url) {
+      return fetch(url).then(function (response) {
+        if (!response.ok) throw new Error(response.status);
+        return response.json();
+      });
+    }
+
+    function loadPhotos(year) {
+      if (photoCache[year]) return Promise.resolve(photoCache[year]);
+      var url = "data/gallery.json";
+      if (year !== "all") {
+        var entry = galleryIndex.find(function (item) {
+          if (year === "unknown") return item.year === null || item.year === undefined;
+          return String(item.year) === year;
+        });
+        if (!entry) return Promise.resolve([]);
+        url = entry.file;
+      }
+      return fetchJson(url).then(function (photos) {
+        photoCache[year] = photos;
+        return photos;
+      });
+    }
+
+    function selectYear(year) {
+      currentYear = year;
+      buildChips();
+      gridEl.innerHTML = '<p class="gal-status" style="grid-column:1/-1;">사진을 불러오는 중입니다.</p>';
+      loadPhotos(year).then(function (photos) {
+        if (currentYear === year) renderGrid(photos);
+      }).catch(function () {
+        if (currentYear === year) {
+          gridEl.innerHTML = '<p class="gal-status" style="grid-column:1/-1;">사진 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+        }
+      });
     }
 
     function appendBatch() {
@@ -471,7 +506,9 @@
         // thumb 키는 build_gallery.py가 생성한 md5 파일명 — 영숫자이지만 방어적으로 escape
         var thumb = escapeHtml(p.thumb);
         html += '<button class="photo-cell" data-idx="' + i + '" type="button">' +
-          '<img src="thumbs/' + thumb + '" loading="lazy" alt="MR ' + escapeHtml(yearLabel(p.year)) + ' 사진" />' +
+          '<img src="thumbs/' + thumb + '"' +
+          (i === 0 ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"') +
+          ' alt="MR ' + escapeHtml(yearLabel(p.year)) + ' 사진" />' +
           "</button>";
       });
       gridEl.insertAdjacentHTML("beforeend", html);
@@ -654,17 +691,37 @@
     });
 
     // ───────────────────── 데이터 로드 ─────────────────────
-    fetch("data/gallery.json")
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (json) {
-        allPhotos = json;
-        var knownYears = allPhotos.map(function (p) { return p.year; }).filter(function (y) { return y !== null && y !== undefined; });
+    fetchJson("data/gallery-years/index.json")
+      .then(function (index) {
+        galleryIndex = index;
+        var knownYears = galleryIndex.map(function (item) { return item.year; }).filter(function (year) {
+          return year !== null && year !== undefined;
+        });
         if (knownYears.length) currentYear = String(Math.max.apply(null, knownYears));
         buildChips();
-        renderGrid();
+        selectYear(currentYear);
       })
       .catch(function () {
-        gridEl.innerHTML = '<p class="gal-status" style="grid-column:1/-1;">사진 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+        fetchJson("data/gallery.json").then(function (photos) {
+          photoCache.all = photos;
+          var groups = {};
+          photos.forEach(function (photo) {
+            var key = photo.year === null || photo.year === undefined ? "unknown" : String(photo.year);
+            groups[key] = (groups[key] || 0) + 1;
+          });
+          galleryIndex = Object.keys(groups).map(function (key) {
+            return { year: key === "unknown" ? null : Number(key), count: groups[key] };
+          });
+          var knownYears = galleryIndex.map(function (item) { return item.year; }).filter(Number.isFinite);
+          currentYear = knownYears.length ? String(Math.max.apply(null, knownYears)) : "all";
+          photoCache[currentYear] = photos.filter(function (photo) {
+            return String(photo.year) === currentYear;
+          });
+          buildChips();
+          selectYear(currentYear);
+        }).catch(function () {
+          gridEl.innerHTML = '<p class="gal-status" style="grid-column:1/-1;">사진 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+        });
       });
 
     MR40Ops.rows("videos").then(function (videos) {
