@@ -123,17 +123,32 @@
 
     function setupPayStep() {
       var step = document.getElementById("pay-step");
-      step.hidden = false;
       var pays = (CONFIG.PAYMENTS || {});
-      var card = safeUrl(pays.cardUrl);
-      var transfer = safeUrl(pays.transferUrl);
-      var buttons = [];
-      if (card) buttons.push('<a class="pay-card-btn" href="' + card + '" target="_blank" rel="noopener">💳 카드로 결제</a>');
-      if (transfer) buttons.push('<a class="pay-transfer-btn" href="' + transfer + '" target="_blank" rel="noopener">🏦 간편 송금(이체)</a>');
-      document.getElementById("pay-buttons").innerHTML = buttons.join("");
-      document.getElementById("pay-note").textContent = buttons.length
-        ? (pays.note || "결제 확인은 준비위원회가 신청서와 대조해 진행합니다.")
-        : "결제 수단을 준비하고 있어요. 열리는 대로 이 자리와 단톡방에 안내드릴게요.";
+      // 운영 시트(행사정보 탭)가 config보다 우선 — 이벤터스 전환도 시트에서 가능
+      MR40Ops.rows("event").then(function (rows) {
+        var data = MR40Ops.eventMap(rows);
+        var provider = data.payment_provider || pays.provider || "direct";
+        var eventus = safeUrl(data.eventus_url || pays.eventusUrl);
+        if (provider === "off") return;            // 결제 숨김
+        step.hidden = false;
+        if (provider === "eventus" && eventus) {
+          document.getElementById("pay-buttons").innerHTML =
+            '<a class="pay-card-btn" href="' + eventus + '" target="_blank" rel="noopener">이벤터스에서 신청·결제하기</a>';
+          document.getElementById("pay-note").textContent =
+            "참가 신청과 결제를 이벤터스에서 한 번에 진행합니다.";
+          return;
+        }
+        var card = safeUrl(data.card_payment || pays.cardUrl);
+        var transfer = safeUrl(data.transfer_payment || pays.transferUrl);
+        var buttons = [];
+        if (card) buttons.push('<a class="pay-card-btn" href="' + card + '" target="_blank" rel="noopener">💳 카드로 결제</a>');
+        if (transfer) buttons.push('<a class="pay-transfer-btn" href="' + transfer + '" target="_blank" rel="noopener">🏦 간편 송금(이체)</a>');
+        document.getElementById("pay-buttons").innerHTML = buttons.join("");
+        var refund = data.refund_policy || (CONFIG.EVENT_DETAILS || {}).refundPolicy;
+        document.getElementById("pay-note").textContent = buttons.length
+          ? ("결제 확인은 준비위원회가 신청서와 대조해 진행합니다." + (refund ? " · " + refund : ""))
+          : "결제 수단을 준비하고 있어요. 열리는 대로 이 자리와 단톡방에 안내드릴게요.";
+      });
     }
 
     var links = [];

@@ -289,7 +289,7 @@
       <h2>참석 현황</h2><p id="attendance-copy">참석 인원을 집계하고 있습니다.</p>
     </section>
 
-    <section class="event-extra card">
+    <section class="event-extra card" id="payment-box">
       <h2>참가비 결제</h2>
       <p id="payment-copy">결제 수단과 금액을 준비하고 있습니다. 결제자명은 참석 조사 이름과 같게 입력해 주세요.</p>
       <div class="payment-grid">
@@ -356,8 +356,13 @@
     var timer = setInterval(tick, 1000);
     tick();
 
-    // ── 참가 신청 (SURVEYS의 참석 조사 우선, 없으면 EVENT_FORM_URL) ──
+    // ── 참가 신청 — 기본은 사이트 내 신청+결제 흐름, 이벤터스 확정 시 그쪽으로 ──
+    var eventusApplyUrl = "";
     document.getElementById("apply-btn").addEventListener("click", function () {
+      if (eventusApplyUrl) {
+        window.open(eventusApplyUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
       location.href = "survey.html?id=attend";
     });
 
@@ -439,8 +444,22 @@
       renderProgram(data.program || details.program);
       setLink("kakao-map", data.kakao_map || CONFIG.MAP_LINKS.kakao, "카카오맵으로 보기");
       setLink("naver-map", data.naver_map || CONFIG.MAP_LINKS.naver, "네이버지도로 보기");
-      setLink("card-payment", data.card_payment || CONFIG.PAYMENTS.cardUrl, "카드 결제");
-      setLink("transfer-payment", data.transfer_payment || CONFIG.PAYMENTS.transferUrl, "간편 송금");
+      // 결제 모드: direct(기본) | eventus | off — 운영 시트가 config보다 우선
+      var payProvider = data.payment_provider || CONFIG.PAYMENTS.provider || "direct";
+      var eventusUrl = safeUrl(data.eventus_url || CONFIG.PAYMENTS.eventusUrl);
+      var payBox = document.getElementById("payment-box");
+      if (payProvider === "off") {
+        payBox.hidden = true;
+      } else if (payProvider === "eventus" && eventusUrl) {
+        document.getElementById("payment-copy").textContent =
+          "참가 신청과 결제를 이벤터스에서 한 번에 진행합니다.";
+        document.querySelector("#payment-box .payment-grid").innerHTML =
+          '<a class="payment-btn" href="' + eventusUrl + '" target="_blank" rel="noopener">이벤터스에서 신청·결제하기</a>';
+        eventusApplyUrl = eventusUrl; // 상단 신청 버튼도 이벤터스로
+      } else {
+        setLink("card-payment", data.card_payment || CONFIG.PAYMENTS.cardUrl, "카드 결제");
+        setLink("transfer-payment", data.transfer_payment || CONFIG.PAYMENTS.transferUrl, "간편 송금");
+      }
       var fee = MR40Ops.lines(data.fee || details.fee);
       if (fee.length) document.getElementById("payment-copy").textContent =
         "참가비 " + fee.join(" / ") + " · 결제자명은 참석 조사 이름과 같게 입력해 주세요.";
