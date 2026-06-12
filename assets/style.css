@@ -36,10 +36,6 @@ html {
   font-size: 16px;
 }
 
-html.large-text {
-  font-size: 18px;
-}
-
 body {
   font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
   background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%);
@@ -89,19 +85,9 @@ a {
   margin-left: auto;
 }
 
-.font-toggle,
 .nav-toggle {
   min-width: 44px;
   min-height: 44px;
-}
-
-.font-toggle {
-  border: 1px solid rgba(91, 140, 255, 0.4);
-  border-radius: 0.6rem;
-  background: rgba(91, 140, 255, 0.12);
-  color: var(--text);
-  font: 700 0.9rem/1 inherit;
-  cursor: pointer;
 }
 
 .logo span {
@@ -192,41 +178,6 @@ a {
   }
 }
 
-.bottom-nav {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  body { padding-bottom: 72px; }
-  .bottom-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1400;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    min-height: 64px;
-    padding-bottom: env(safe-area-inset-bottom);
-    background: rgba(11, 21, 48, 0.97);
-    border-top: 1px solid rgba(91, 140, 255, 0.3);
-    backdrop-filter: blur(12px);
-  }
-  .bottom-nav a {
-    display: flex;
-    min-height: 64px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.15rem;
-    color: var(--muted);
-    font-size: 0.76rem;
-    font-weight: 700;
-    text-decoration: none;
-  }
-  .bottom-nav a span:first-child { font-size: 1.25rem; }
-  .bottom-nav a.active { color: var(--accent); background: rgba(91, 140, 255, 0.12); }
-}
 
 /* ---------- 카드 ---------- */
 .card {
@@ -287,9 +238,6 @@ iframe:focus-visible {
 .back-to-top { display: none; }
 .back-to-top.visible { display: block; }
 
-@media (min-width: 768px) {
-  .page-utilities { bottom: 1.4rem; }
-}
 
 .card:hover {
   transform: translateY(-3px);
@@ -379,20 +327,8 @@ iframe:focus-visible {
 }
 
 @media (max-width: 480px) {
-  .music-fab { bottom: 5.2rem; left: 0.75rem; }
   .music-fab .music-title { display: none; }
   .hidden-xs { display: none; }
-}
-
-/* 모바일 하단 탭바(64px)와 플로팅 버튼 겹침 방지 — 탭바와 같은 브레이크포인트 */
-@media (max-width: 767px) {
-  .music-fab { bottom: 5.2rem; }
-  .survey-fab,
-  #fab-register,
-  #fab-guestbook {
-    bottom: 5.2rem !important;
-    z-index: 1500;
-  }
 }
 
 /* ---------- 공통 유틸 ---------- */
@@ -467,8 +403,7 @@ iframe:focus-visible {
 .ar-body p,
 .page-utilities button,
 .music-fab,
-.new-window-note,
-.bottom-nav a {
+.new-window-note {
   font-size: 0.875rem !important;
   line-height: 1.45;
 }

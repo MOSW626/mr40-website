@@ -196,20 +196,16 @@
       position: absolute;
       top: 1rem;
       right: 1rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      min-height: 48px;
-      background: rgba(11, 21, 48, 0.88);
+      width: 48px;
+      height: 48px;
+      background: rgba(11, 21, 48, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 9999px;
+      border-radius: 50%;
       color: var(--text);
-      font-size: 1rem;
-      font-weight: 700;
+      font-size: 1.5rem;
+      line-height: 1;
       cursor: pointer;
       z-index: 2001;
-      line-height: 1;
-      padding: 0.6rem 1rem;
     }
 
     .lb-close:hover { color: var(--text); }
@@ -363,7 +359,7 @@
 
   <!-- 라이트박스 -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 크게 보기" aria-hidden="true">
-    <button class="lb-close" type="button"><span aria-hidden="true">×</span> 닫기</button>
+    <button class="lb-close" type="button" aria-label="닫기">×</button>
     <button class="lb-btn lb-prev" type="button" aria-label="이전">←</button>
     <img id="lb-img" alt="" />
     <button class="lb-btn lb-next" type="button" aria-label="다음">→</button>

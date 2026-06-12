@@ -19,20 +19,13 @@ function injectNav(active) {
     <nav class="topnav">
       <a href="index.html" class="logo" aria-label="MR40 처음으로">MR<span>40</span></a>
       <div class="nav-actions">
-        <button class="font-toggle" type="button" aria-pressed="false" aria-label="가+ 글자 크게 보기">가+</button>
-        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span aria-hidden="true">☰</span> 메뉴</button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="메뉴">☰</button>
       </div>
       <div class="nav-links" id="primary-nav">${links}</div>
     </nav>`);
 
   const nav = document.querySelector(".topnav");
   const menuButton = nav.querySelector(".nav-toggle");
-  const fontButton = nav.querySelector(".font-toggle");
-  const largeText = localStorage.getItem("mr40_large_text") === "1";
-  document.documentElement.classList.toggle("large-text", largeText);
-  fontButton.setAttribute("aria-pressed", String(largeText));
-  fontButton.textContent = largeText ? "가-" : "가+";
-  fontButton.setAttribute("aria-label", largeText ? "가- 기본 글자 크기로 보기" : "가+ 글자 크게 보기");
 
   menuButton.addEventListener("click", function () {
     const open = nav.classList.toggle("open");
@@ -44,30 +37,13 @@ function injectNav(active) {
       menuButton.setAttribute("aria-expanded", "false");
     });
   });
-  fontButton.addEventListener("click", function () {
-    const enabled = !document.documentElement.classList.contains("large-text");
-    document.documentElement.classList.toggle("large-text", enabled);
-    localStorage.setItem("mr40_large_text", enabled ? "1" : "0");
-    fontButton.setAttribute("aria-pressed", String(enabled));
-    fontButton.textContent = enabled ? "가-" : "가+";
-    fontButton.setAttribute("aria-label", enabled ? "가- 기본 글자 크기로 보기" : "가+ 글자 크게 보기");
-  });
 
-  document.body.insertAdjacentHTML("beforeend", `
-    <nav class="bottom-nav" aria-label="주요 메뉴">
-      <a href="index.html"${active === "index.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">⌂</span><span>홈</span></a>
-      <a href="gallery.html"${active === "gallery.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">▧</span><span>사진관</span></a>
-      <a href="members.html"${active === "members.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">♙</span><span>주소록</span></a>
-      <a href="event.html"${active === "event.html" ? ' class="active" aria-current="page"' : ""}><span aria-hidden="true">☆</span><span>행사</span></a>
-    </nav>`);
 
   const utility = document.createElement("div");
   utility.className = "page-utilities";
   utility.innerHTML =
-    '<button class="share-page" type="button" aria-label="이 페이지 공유">공유</button>' +
     '<button class="back-to-top" type="button" aria-label="맨 위로">↑ 맨 위로</button>';
   document.body.appendChild(utility);
-  utility.querySelector(".share-page").addEventListener("click", shareCurrentPage);
   utility.querySelector(".back-to-top").addEventListener("click", function () {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
