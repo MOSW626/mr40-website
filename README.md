@@ -1,6 +1,6 @@
 # 🤖 MR 40주년 기념 홈페이지
 
-KAIST 마이크로 로봇 동아리 **MR**(1986~) 창립 40주년 기념 사이트입니다.
+KAIST 동아리 **MR**(Microrobot Research, 1986~) 창립 40주년 기념 사이트입니다.
 서버·데이터베이스 비용 없이 **GitHub Pages + Google Sheets + YouTube**로 운영됩니다.
 
 ## 🚀 구성
