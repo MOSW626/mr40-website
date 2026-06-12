@@ -27,6 +27,23 @@
     .fallback { padding: 2rem; text-align: center; color: var(--muted); }
     .contact-box { margin-top: 1.25rem; padding: 1.25rem; text-align: center; line-height: 1.8; }
     .contact-box a { color: var(--accent); text-decoration: underline; font-weight: 700; }
+
+    /* ── 2단계: 결제 ── */
+    .pay-step { margin-top: 1.25rem; padding: 1.5rem; text-align: center; }
+    .pay-step h2 { font-size: 1.15rem; margin-bottom: 0.6rem; }
+    .step-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 9999px; font-size: 0.78rem; padding: 0.2rem 0.7rem; margin-right: 0.4rem; vertical-align: 0.1em; }
+    .pay-copy { color: var(--muted); line-height: 1.75; margin-bottom: 1rem; }
+    .pay-copy strong { color: var(--text); }
+    .fee-table { margin: 0 auto 1.2rem; border-collapse: collapse; }
+    .fee-table th, .fee-table td { padding: 0.45rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 0.95rem; }
+    .fee-table th { color: var(--accent); text-align: right; }
+    .fee-table td { text-align: left; }
+    .pay-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+    .pay-buttons a { display: inline-flex; min-height: 48px; align-items: center; padding: 0.8rem 1.5rem; border-radius: 9999px; font-weight: 700; text-decoration: none; }
+    .pay-card-btn { background: var(--accent); color: #fff; }
+    .pay-transfer-btn { border: 1px solid var(--accent); color: var(--accent); }
+    .pay-note { margin-top: 0.9rem; font-size: 0.85rem; color: var(--muted); }
+    .pay-step.highlight { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(91,140,255,.35); }
   </style>
 </head>
 <body>
@@ -40,6 +57,23 @@
       <a class="survey-open disabled" id="external-form" href="#" target="_blank" rel="noopener">설문을 새 창에서 열기</a>
     </div>
     <div id="form-host"><p class="fallback card">설문 링크를 준비하고 있습니다.</p></div>
+
+    <!-- 참석 조사 전용: 2단계 결제 안내 (id=attend일 때만 JS가 표시) -->
+    <section class="pay-step card" id="pay-step" hidden>
+      <h2><span class="step-badge">2단계</span> 참가비 결제</h2>
+      <p class="pay-copy">신청서를 보내셨다면 참가비를 결제해 주세요.<br>
+      <strong>결제(입금)자 이름을 신청서의 이름과 같게</strong> 해주시면 확인이 빨라집니다.</p>
+      <table class="fee-table" aria-label="참가비 안내">
+        <tbody>
+          <tr><th>성인</th><td>10~15만원</td></tr>
+          <tr><th>학부생</th><td>5만원</td></tr>
+          <tr><th>유아동</th><td>3만원</td></tr>
+        </tbody>
+      </table>
+      <div class="pay-buttons" id="pay-buttons"></div>
+      <p class="pay-note" id="pay-note"></p>
+    </section>
+
     <aside class="contact-box card" id="contact-box">
       폼 사용이 어려우면 준비위원회에 전화나 문자로 접수할 수 있습니다.<br>
       <span id="contact-links">연락처 준비 중</span>
@@ -68,7 +102,39 @@
       external.classList.remove("disabled");
       document.getElementById("form-host").innerHTML =
         '<iframe class="form-frame" title="' + escapeHtml(survey.title || "설문") + '" src="' + escapeHtml(url) + '">설문을 불러올 수 없습니다.</iframe>';
+
+      // ── 참석 조사면 2단계(결제) 표시 + 제출 감지 시 자동 스크롤 ──
+      if (id === "attend") {
+        setupPayStep();
+        var frame = document.querySelector(".form-frame");
+        var loads = 0;
+        frame.addEventListener("load", function () {
+          loads += 1;
+          // 구글폼은 제출 시에만 문서가 한 번 더 로드된다 (섹션 이동은 로드 없음)
+          if (loads >= 2) {
+            var step = document.getElementById("pay-step");
+            step.classList.add("highlight");
+            step.scrollIntoView({ behavior: "smooth", block: "start" });
+            showToast("신청이 접수됐어요! 이어서 참가비를 결제해 주세요.");
+          }
+        });
+      }
     });
+
+    function setupPayStep() {
+      var step = document.getElementById("pay-step");
+      step.hidden = false;
+      var pays = (CONFIG.PAYMENTS || {});
+      var card = safeUrl(pays.cardUrl);
+      var transfer = safeUrl(pays.transferUrl);
+      var buttons = [];
+      if (card) buttons.push('<a class="pay-card-btn" href="' + card + '" target="_blank" rel="noopener">💳 카드로 결제</a>');
+      if (transfer) buttons.push('<a class="pay-transfer-btn" href="' + transfer + '" target="_blank" rel="noopener">🏦 간편 송금(이체)</a>');
+      document.getElementById("pay-buttons").innerHTML = buttons.join("");
+      document.getElementById("pay-note").textContent = buttons.length
+        ? (pays.note || "결제 확인은 준비위원회가 신청서와 대조해 진행합니다.")
+        : "결제 수단을 준비하고 있어요. 열리는 대로 이 자리와 단톡방에 안내드릴게요.";
+    }
 
     var links = [];
     var phone = CONFIG.CONTACT && safeUrl("tel:" + (CONFIG.CONTACT.phone || ""));

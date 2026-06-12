@@ -27,7 +27,7 @@ const CONFIG = {
       icon: "🎉",
       title: "참석 조사",
       desc: "기념행사 참석 여부 · 동반자 · 숙박 조건",
-      url: "",
+      url: "https://forms.gle/hGYwQG2PQu6HvUaT6",
       active: true,
     },
     {
